@@ -1,0 +1,59 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "build",
+			"command": "dotnet",
+			"type": "process",
+			"args": [
+				"build",
+				"${workspaceFolder}/Splash.sln"
+			],
+			"problemMatcher": "$msCompile"
+		},
+		{
+			"type": "docker-build",
+			"label": "docker-build: debug",
+			"dependsOn": [
+				"build"
+			],
+			"dockerBuild": {
+				"tag": "splash:dev",
+				"target": "base",
+				"dockerfile": "${workspaceFolder}/src/App/Splash.Api/Dockerfile",
+				"context": "${workspaceFolder}",
+				"pull": false
+			},
+			"netCore": {
+				"appProject": "${workspaceFolder}/src/App/Splash.Api/Splash.Api.csproj"
+			}
+		},
+		{
+			"type": "docker-run",
+			"label": "docker-run: debug",
+			"dependsOn": [
+				"docker-build: debug"
+			],
+			"dockerRun": {
+				"containerName": "splash-dev",
+				"ports": [
+					{
+						"hostPort": 51001,
+						"containerPort": 80
+					}
+				],
+				"env": {
+					"ASPNETCORE_URLS": "http://+:80"
+				},
+				"remove": true,
+				"image": "splash:dev",
+				"network": "splash",
+				"customOptions": "--interactive --tty --hostname splash"
+			},
+			"netCore": {
+				"appProject": "${workspaceFolder}/src/App/Splash.Api/Splash.Api.csproj",
+				"enableDebugging": true
+			}
+		}
+	]
+}
